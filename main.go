@@ -10,7 +10,7 @@ func main() {
 	showUpcomingBirthdays()
 
 	args := os.Args[1:]
-	if len(args) > 0 && args[0] == ".ok" {
+	if len(args) > 0 && args[0] == "add" {
 		addBirthday()
 		return
 	}
