@@ -10,16 +10,20 @@ import (
 func showUpcomingBirthdays() {
 	file, err := os.Open(dataFile)
 	if err != nil {
+		fmt.Println("No upcoming birthdays.")
 		return
 	}
 	defer file.Close()
 
 	var birthdays []Birthday
-	if err := json.NewDecoder(file).Decode(&birthdays); err != nil {
+	if err := json.NewDecoder(file).Decode(&birthdays); err != nil || len(birthdays) == 0 {
+		fmt.Println("No upcoming birthdays.")
 		return
 	}
 
 	now := time.Now()
+	found := false
+
 	fmt.Println("Upcoming Birthdays:")
 	for _, b := range birthdays {
 		birthdayDate := time.Date(now.Year(), time.Month(b.Month), b.Day, 0, 0, 0, 0, now.Location())
@@ -29,6 +33,11 @@ func showUpcomingBirthdays() {
 		daysUntil := int(birthdayDate.Sub(now).Hours() / 24)
 		if daysUntil <= 30 {
 			fmt.Printf("- %s in %d days (%d/%d)\n", b.Name, daysUntil, b.Day, b.Month)
+			found = true
 		}
+	}
+
+	if !found {
+		fmt.Println("No upcoming birthdays.")
 	}
 }
