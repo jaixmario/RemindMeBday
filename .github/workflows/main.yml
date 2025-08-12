@@ -1,4 +1,4 @@
-name: Build Onedrive CLI
+name: Build birthday CLI
 
 on:
   push:
@@ -23,22 +23,22 @@ jobs:
       - name: Initialize Go module (if not already)
         run: |
           if [ ! -f go.mod ]; then
-            go mod init onedrivecli
+            go mod init birthday
           fi
           go mod tidy
 
       - name: Build Linux amd64 binary
         run: |
-          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o onedrivecli
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o RemindMeBday
 
       - name: Build Windows amd64 binary
         run: |
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o onedrivecli.exe
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o RemindMeBday.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: onedrivecli-binaries
+          name: RemindMeBday-binaries
           path: |
-            onedrivecli
-            onedrivecli.exe
+            RemindMeBday
+            RemindMeBday.exe
