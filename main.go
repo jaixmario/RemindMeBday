@@ -38,7 +38,8 @@ func main() {
 		fmt.Println("\n--- Birthday Reminder ---")
 		fmt.Println("1. Add Birthday")
 		fmt.Println("2. View All Birthdays")
-		fmt.Println("3. Exit")
+		fmt.Println("3. View Most Close Birthday")
+		fmt.Println("4. Exit")
 		fmt.Print("Enter option: ")
 
 		choice := readLine()
@@ -48,6 +49,8 @@ func main() {
 		case "2":
 			viewBirthdays()
 		case "3":
+			viewMostCloseBirthday()
+		case "4":
 			fmt.Println("Goodbye!")
 			return
 		default:
@@ -116,6 +119,41 @@ func viewBirthdays() {
 	waitForEnter()
 }
 
+func viewMostCloseBirthday() {
+	clearScreen()
+	data := loadData()
+	if len(data) == 0 {
+		fmt.Println("No birthdays found.")
+		waitForEnter()
+		return
+	}
+
+	today := time.Now()
+	var closest Birthday
+	minDays := 999999
+
+	for _, b := range data {
+		thisYear := today.Year()
+		birthday := time.Date(thisYear, time.Month(b.Month), b.Day, 0, 0, 0, 0, time.Local)
+		if birthday.Before(today) {
+			birthday = time.Date(thisYear+1, time.Month(b.Month), b.Day, 0, 0, 0, 0, time.Local)
+		}
+		days := int(birthday.Sub(today).Hours() / 24)
+		if days < minDays {
+			minDays = days
+			closest = b
+		}
+	}
+
+	fmt.Println("🎯 Most Close Birthday 🎯")
+	if closest.Year != nil {
+		fmt.Printf("%s - %02d/%02d/%d (in %d days)\n", closest.Name, closest.Day, closest.Month, *closest.Year, minDays)
+	} else {
+		fmt.Printf("%s - %02d/%02d (in %d days)\n", closest.Name, closest.Day, closest.Month, minDays)
+	}
+	waitForEnter()
+}
+
 func showUpcomingBirthdays() {
 	data := loadData()
 	if len(data) == 0 {
@@ -130,7 +168,6 @@ func showUpcomingBirthdays() {
 		thisYear := today.Year()
 		birthdayThisYear := time.Date(thisYear, time.Month(b.Month), b.Day, 0, 0, 0, 0, time.Local)
 
-		// If birthday already passed this year, check next year
 		if birthdayThisYear.Before(today) {
 			birthdayThisYear = time.Date(thisYear+1, time.Month(b.Month), b.Day, 0, 0, 0, 0, time.Local)
 		}
