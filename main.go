@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -20,6 +22,9 @@ type Birthday struct {
 const dataFile = "birthdays.json"
 
 func main() {
+	clearScreen()
+	showUpcomingBirthdays()
+
 	args := os.Args[1:]
 	if len(args) > 0 && args[0] == ".ok" {
 		addBirthday()
@@ -27,6 +32,9 @@ func main() {
 	}
 
 	for {
+		clearScreen()
+		showUpcomingBirthdays()
+
 		fmt.Println("\n--- Birthday Reminder ---")
 		fmt.Println("1. Add Birthday")
 		fmt.Println("2. View All Birthdays")
@@ -49,6 +57,7 @@ func main() {
 }
 
 func addBirthday() {
+	clearScreen()
 	name := ""
 	for {
 		fmt.Print("Enter name: ")
@@ -75,10 +84,7 @@ func addBirthday() {
 		}
 	}
 
-	// Load existing data
 	data := loadData()
-
-	// Add new birthday
 	data = append(data, Birthday{
 		Name:  name,
 		Day:   day,
@@ -86,23 +92,66 @@ func addBirthday() {
 		Year:  year,
 	})
 
-	// Save
 	saveData(data)
 	fmt.Println("Saved successfully!")
+	waitForEnter()
 }
 
 func viewBirthdays() {
+	clearScreen()
 	data := loadData()
 	if len(data) == 0 {
 		fmt.Println("No birthdays found.")
+		waitForEnter()
 		return
 	}
-	fmt.Println("\n--- Saved Birthdays ---")
+	fmt.Println("--- Saved Birthdays ---")
 	for i, b := range data {
 		if b.Year != nil {
-			fmt.Printf("%d. %s - %d/%d/%d\n", i+1, b.Name, b.Day, b.Month, *b.Year)
+			fmt.Printf("%d. %s - %02d/%02d/%d\n", i+1, b.Name, b.Day, b.Month, *b.Year)
 		} else {
-			fmt.Printf("%d. %s - %d/%d\n", i+1, b.Name, b.Day, b.Month)
+			fmt.Printf("%d. %s - %02d/%02d\n", i+1, b.Name, b.Day, b.Month)
+		}
+	}
+	waitForEnter()
+}
+
+func showUpcomingBirthdays() {
+	data := loadData()
+	if len(data) == 0 {
+		fmt.Println("No upcoming birthdays.")
+		return
+	}
+
+	today := time.Now()
+	upcoming := []Birthday{}
+
+	for _, b := range data {
+		thisYear := today.Year()
+		birthdayThisYear := time.Date(thisYear, time.Month(b.Month), b.Day, 0, 0, 0, 0, time.Local)
+
+		// If birthday already passed this year, check next year
+		if birthdayThisYear.Before(today) {
+			birthdayThisYear = time.Date(thisYear+1, time.Month(b.Month), b.Day, 0, 0, 0, 0, time.Local)
+		}
+
+		diff := birthdayThisYear.Sub(today).Hours() / 24
+		if diff >= 0 && diff <= 7 {
+			upcoming = append(upcoming, b)
+		}
+	}
+
+	if len(upcoming) == 0 {
+		fmt.Println("No birthdays in the next 7 days.")
+		return
+	}
+
+	fmt.Println("🎂 Upcoming Birthdays (next 7 days) 🎂")
+	for _, b := range upcoming {
+		if b.Year != nil {
+			fmt.Printf("- %s on %02d/%02d/%d\n", b.Name, b.Day, b.Month, *b.Year)
+		} else {
+			fmt.Printf("- %s on %02d/%02d\n", b.Name, b.Day, b.Month)
 		}
 	}
 }
@@ -148,4 +197,21 @@ func readInt(prompt string, min, max int) int {
 		}
 		fmt.Printf("Please enter a valid number between %d and %d.\n", min, max)
 	}
+}
+
+func waitForEnter() {
+	fmt.Print("\nPress Enter to continue...")
+	readLine()
+}
+
+func clearScreen() {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "cls")
+	default:
+		cmd = exec.Command("clear")
+	}
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
